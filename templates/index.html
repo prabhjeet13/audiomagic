@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translytica - Audio Magic</title>
+    <style>
+        body {
+            background-color: #e0f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 60px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 700px; 
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .container:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            font-size: 30px;
+            text-transform: uppercase;
+            color: #00796b;
+            font-weight: bold;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+        h2 {
+            font-size: 18px;
+            color: #004d40;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        h3 {
+            font-size: 20px;
+            color: #00796b;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        input[type="file"], select {
+            margin-bottom: 20px;
+            padding: 12px;
+            border: 1px solid #b2dfdb;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: #f0f8ff;
+        }
+        button {
+            background-color: #00bfff; 
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease; /* Added animation effects */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+        }
+        button:hover {
+            background-color: #1e90ff; 
+            transform: translateY(-4px); 
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); 
+        }
+        .result {
+            margin-top: 20px;
+        }
+        p {
+            font-size: 16px;
+            color: #333;
+            margin: 10px 0;
+            line-height: 1.5;
+            text-transform: lowercase;
+        }
+        .container .result p {
+            background-color: #e0f2f1;
+            padding: 12px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 40px 20px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 16px;
+            }
+            h3 {
+                font-size: 18px;
+            }
+            input[type="file"], select {
+                padding: 10px;
+                font-size: 14px;
+            }
+            button {
+                padding: 12px 18px;
+                font-size: 14px;
+            }
+            p {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Translytica - Audio Magic</h1>
+    <h2>Unleash the Power of Your Voice</h2> 
+
+    <form id="audio-form" enctype="multipart/form-data">
+        <input type="file" id="audio-file" accept="audio/*" required>
+
+        <!-- Target Language Dropdown -->
+        <select id="target_lang" name="target_lang" required>
+            <option value="" disabled selected>Select Target Language</option>
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="hi">Hindi</option>
+            <!-- Add more languages as needed -->
+        </select>
+
+        <br>
+        <button type="submit">Upload and Transcribe</button> 
+    </form>
+
+    <div class="result">
+        <h3>Original Transcription:</h3>
+        <p id="transcription"></p>
+        <h3>Cleaned Transcription:</h3>
+        <p id="cleaned-transcription"></p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('audio-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        const fileInput = document.getElementById('audio-file');
+        const langSelect = document.getElementById('target_lang');
+
+        // Validate if a language is selected
+        if (!langSelect.value) {
+            alert('Please select a target language.');
+            return;
+        }
+
+        formData.append('file', fileInput.files[0]);
+        formData.append('target_lang', langSelect.value);
+
+        document.getElementById('transcription').innerText = 'Transcribing...';
+        document.getElementById('cleaned-transcription').innerText = 'Translating...';
+        fetch('/translate', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('transcription').innerText = `Error: ${data.error}`;
+                document.getElementById('cleaned-transcription').innerText = '';
+            } else {
+                document.getElementById('transcription').innerText = data.original_transcription;
+                document.getElementById('cleaned-transcription').innerText = data.cleaned_transcription;
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            document.getElementById('transcription').innerText = 'An unexpected error occurred.';
+            document.getElementById('cleaned-transcription').innerText = '';
+        });
+    });
+</script>
+
+</body>
+</html>
